@@ -1,0 +1,28 @@
+version: '3'
+vars:
+  RUNTIME: ghcr.io/nuvolaris/action-python-v311:3.0.0-beta.2311231822
+
+tasks:
+
+  virtualenv:
+    cmds:
+    - >
+      cat virtualenv.sh |
+      docker run -i -u=$(id -u):$(id -g) 
+      --entrypoint=/bin/bash 
+      -v $PWD/bot:/tmp/bot {{.RUNTIME}}
+    - mv bot/virtualenv.zip .
+    status:
+    - test -e virtualenv.zip
+  
+  bot:
+    dir: bot
+    cmds:
+    - task: virtualenv
+    - cp ../virtualenv.zip ../bot.zip
+    - zip -u ../bot.zip *
+
+  deploy:
+    - task: bot
+    - nuv package update nuvdemoaibot
+    - nuv action update nuvdemoaibot/bot bot.zip --kind python:3 --web=true

@@ -1,0 +1,5 @@
+.env
+.vscode/
+.git-hooks/
+virtualenv.zip
+bot.zip

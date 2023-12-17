@@ -1,0 +1,79 @@
+version: '3'
+
+dotenv:
+  - ../.env
+
+vars:
+  HOSTNAME: 
+    sh: awk -F= '/HOSTNAME=/{print $2}' ../.env
+  USERNAME: 
+    sh:  awk -F= '/USERNAME=/{print $2}' ../.env
+  PORT: 8000
+  URL: "http://{{.HOSTNAME}}:{{.PORT}}"
+
+env:
+  SSH: ssh {{.USERNAME}}@{{.HOSTNAME}}
+  SCP: scp {{.USERNAME}}@{{.HOSTNAME}}
+
+tasks:
+
+  setup: pip install fabric
+
+  enter:
+    - $SSH
+
+  start:
+    - envsubst <start.sh | $SSH
+
+  logs:
+    - $SSH sudo docker logs vllm -f
+
+  models:
+    - curl -s "{{.URL}}/v1/models"  | jq . 
+
+  complete:
+    requires: {vars: [Q,N]}
+    vars:
+      MODEL: 
+        sh: curl -s "{{.URL}}/v1/models"  | jq -r .data[0].root
+    cmds:
+    - >
+      curl -s {{.URL}}/v1/completions 
+      -H "Content-Type: application/json" 
+      -d '{
+        "model": "{{.MODEL}}",
+        "prompt": "{{.Q}}",
+        "max_tokens": {{.N}},
+        "temperature": 0
+      }' | jq -r .choices[0].text
+      
+
+  chat:
+    requires: {vars: [Q,N]}
+    vars:
+      MODEL: 
+        sh: curl -s "{{.URL}}/v1/models"  | jq -r .data[0].root
+    cmds:
+    - >
+      curl -s {{.URL}}/v1/completions 
+      -H "Content-Type: application/json" 
+      -d '{
+        "model": "{{.MODEL}}",
+        "prompt": "{{.Q}}",
+        "max_tokens": {{.N}},
+        "temperature": 0
+      }' | jq -r .choices[0].text
+      
+
+
+
+  generate:
+    - |
+      curl {{.URL}}/generate -d '{
+        "prompt": "San Francisco is a",
+        "use_beam_search": true,
+        "n": 4,
+        "temperature": 0
+      }'
+
+
