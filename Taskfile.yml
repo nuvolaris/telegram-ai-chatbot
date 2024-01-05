@@ -2,6 +2,9 @@ version: '3'
 vars:
   RUNTIME: ghcr.io/nuvolaris/action-python-v311:3.0.0-beta.2311231822
 
+dotenv: 
+  - .env
+
 tasks:
 
   virtualenv:
@@ -24,5 +27,5 @@ tasks:
 
   deploy:
     - task: bot
-    - nuv package update nuvdemoaibot
+    - nuv package update nuvdemoaibot -p TOKEN $TELEGRAM_TOKEN -p URL $TELEGRAM_URL -p BOT $TELEGRAM_BOT
     - nuv action update nuvdemoaibot/bot bot.zip --kind python:3 --web=true

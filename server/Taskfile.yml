@@ -25,6 +25,12 @@ tasks:
   start:
     - envsubst <start.sh | $SSH
 
+  stop:
+    - $SSH sudo docker rm -f vllm
+
+  status:
+    - $SSH sudo docker ps
+
   logs:
     - $SSH sudo docker logs vllm -f
 
@@ -64,7 +70,6 @@ tasks:
         "temperature": 0
       }' | jq -r .choices[0].text
       
-
 
 
   generate:
